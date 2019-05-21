@@ -1,10 +1,39 @@
 #!/bin/bash
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-domains=(example.com www.example.com)
+# Initialize our own variables:
+declare -a domains
 rsa_key_size=4096
-data_path="./data/certbot"
+data_path="./shared/certbot"
 email="" # Adding a valid address is strongly recommended
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
+
+while getopts "hd:p:e:s" opt; do
+    case "$opt" in
+    h)  echo "usage: -d domain1 -d domainN -p /data/path -e email@example.com -s <if staging> "
+	exit 0
+	;;
+    d)  domains+=("$OPTARG")
+        ;;
+    p)  data_path=$OPTARG
+        ;;
+    e)  email=$OPTARG
+        ;;
+    s)  staging=1
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "${1:-}" = "--" ] && shift
+
+for val in "${domains[@]}"; do
+    echo " - $val"
+done
+
+echo "data_path=$data_path, email=$email, staging=$staging, Leftovers: $@"
 
 if [ -d "$data_path" ]; then
   read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
